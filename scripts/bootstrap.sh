@@ -23,46 +23,7 @@ APP_ID=$(create_app_with_federated_creds \
     "$APP_DISPLAY_NAME" "$GITHUB_REPO" "$GITHUB_ENV_NAME" \
     "$SUB_ID" "$TF_RG_NAME" "$STRG_ACCT_NAME")
 
-SP_OBJECT_ID=$(az ad sp show --id "$APP_ID" --query id -o tsv | tr -d '[:space:]')
-
-# --- AD Group ---
-STORAGE_GROUP_ID=$(az ad group show \
-    --group "$GRP_NAME" \
-    --query id -o tsv \
-    2>/dev/null || true)
-
-if [ -z "$STORAGE_GROUP_ID" ]; then
-    STORAGE_GROUP_ID=$(az ad group create \
-        --display-name "$GRP_NAME" \
-        --mail-nickname "$GRP_NAME" \
-        --query id -o tsv)
-fi
-
-# Use --assignee-object-id to avoid servicePrincipalNames filter error
-az role assignment create \
-    --assignee-object-id "$STORAGE_GROUP_ID" \
-    --assignee-principal-type "Group" \
-    --role "Storage Blob Data Contributor" \
-    --scope "/subscriptions/$SUB_ID"
-
-# --- Assign Groups Administrator Entra role to SP ---
-GROUPS_ADMIN_ROLE_ID=$(az rest \
-    --method GET \
-    --uri "https://graph.microsoft.com/v1.0/directoryRoleTemplates" \
-    --query "value[?displayName=='Groups Administrator'].id | [0]" \
-    -o tsv)
-
-# Assign the role via the correct unified role assignments endpoint
-az rest \
-    --method POST \
-    --uri "https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignments" \
-    --headers "Content-Type=application/json" \
-    --body "{
-        \"@odata.type\": \"#microsoft.graph.unifiedRoleAssignment\",
-        \"principalId\": \"${SP_OBJECT_ID}\",
-        \"roleDefinitionId\": \"${GROUPS_ADMIN_ROLE_ID}\",
-        \"directoryScopeId\": \"/\"
-    }"
+STORAGE_GROUP_ID=$(create_storage_group_with_role "$GRP_NAME" "$SUB_ID")
 
 echo "AZURE_TENANT_ID       = $TENANT_ID"
 echo "AZURE_SUBSCRIPTION_ID = $SUB_ID"
