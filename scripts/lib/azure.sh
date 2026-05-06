@@ -41,7 +41,7 @@ create_app_with_federated_creds() {
     az role assignment create \
         --assignee "$sp_obj_id" \
         --role "Contributor" \
-        --scope "/subscriptions/$sub_id"
+        --scope "/subscriptions/$sub_id" >/dev/null
 
     az role assignment create \
         --assignee "$sp_obj_id" \
@@ -59,7 +59,7 @@ create_app_with_federated_creds() {
 }
 
 create_storage_group_with_role() {
-    local grp_name="$1" sub_id="$2"
+    local grp_name="$1" sub_id="$2" sp_obj_id="$3"
     local group_id
 
     group_id=$(az ad group show --group "$grp_name" --query id -o tsv 2>/dev/null) || true
@@ -74,7 +74,20 @@ create_storage_group_with_role() {
     az role assignment create \
         --assignee "$group_id" \
         --role "Storage Blob Data Contributor" \
-        --scope "/subscriptions/$sub_id"
+        --scope "/subscriptions/$sub_id" >/dev/null
+
+    # Assign Groups Administrator Entra ID role to the SP
+    # fdd7a751-b60b-444a-984c-02652fe8fa1c is the well-known Microsoft constant for Groups Administrator
+    az rest \
+        --method POST \
+        --uri "https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignments" \
+        --headers "Content-Type=application/json" \
+        --body "{
+            \"@odata.type\": \"#microsoft.graph.unifiedRoleAssignment\",
+            \"principalId\": \"${sp_obj_id}\",
+            \"roleDefinitionId\": \"fdd7a751-b60b-444a-984c-02652fe8fa1c\",
+            \"directoryScopeId\": \"/\"
+        }" >/dev/null
 
     echo "$group_id"
 }

@@ -23,7 +23,9 @@ APP_ID=$(create_app_with_federated_creds \
     "$APP_DISPLAY_NAME" "$GITHUB_REPO" "$GITHUB_ENV_NAME" \
     "$SUB_ID" "$TF_RG_NAME" "$STRG_ACCT_NAME")
 
-STORAGE_GROUP_ID=$(create_storage_group_with_role "$GRP_NAME" "$SUB_ID")
+SP_OBJECT_ID=$(az ad sp show --id "$APP_ID" --query id -o tsv | tr -d '[:space:]')
+
+STORAGE_GROUP_ID=$(create_storage_group_with_role "$GRP_NAME" "$SUB_ID" "$SP_OBJECT_ID")
 
 echo "AZURE_TENANT_ID       = $TENANT_ID"
 echo "AZURE_SUBSCRIPTION_ID = $SUB_ID"
