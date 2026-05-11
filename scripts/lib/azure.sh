@@ -39,12 +39,14 @@ create_app_with_federated_creds() {
     sp_obj_id=$(az ad sp show --id "$app_id" --query id -o tsv | tr -d '[:space:]')
 
     az role assignment create \
-        --assignee "$sp_obj_id" \
+        --assignee-object-id "$sp_obj_id" \
+        --assignee-principal-type "ServicePrincipal" \
         --role "Contributor" \
         --scope "/subscriptions/$sub_id" >/dev/null
 
     az role assignment create \
-        --assignee "$sp_obj_id" \
+        --assignee-object-id "$sp_obj_id" \
+        --assignee-principal-type "ServicePrincipal" \
         --role "Storage Blob Data Contributor" \
         --scope "/subscriptions/$sub_id/resourceGroups/$rg/providers/Microsoft.Storage/storageAccounts/$acct" >/dev/null
 
@@ -72,7 +74,8 @@ create_storage_group_with_role() {
     fi
 
     az role assignment create \
-        --assignee "$group_id" \
+        --assignee-object-id "$group_id" \
+        --assignee-principal-type "Group" \
         --role "Storage Blob Data Contributor" \
         --scope "/subscriptions/$sub_id" >/dev/null
 
