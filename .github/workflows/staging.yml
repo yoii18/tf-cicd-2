@@ -1,0 +1,44 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      ARM_USE_OIDC: true
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_STAGING }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_STAGING }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: terraform initialisation
+        run: |
+              terraform init \
+              -backend-config="resource_group_name=rg-tfstate" \
+              -backend-config="storage_account_name=${{secrets.TF_STATE_STORAGE_ACCOUNT}}" \
+              -backend-config="container_name=staging" \
+              -backend-config="key=staging.terraform.tfstate" \
+              -backend-config="use_azuread_auth=true" \
+              -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
+              -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+      - name: terraform plan
+        run: |
+            terraform plan -var-file="staging_vars.tfvars" -out=tfplan
+      - name: terraform apply
+        run: |
+            terraform apply -auto-approve tfplan
