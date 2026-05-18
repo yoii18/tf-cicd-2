@@ -38,7 +38,7 @@ jobs:
               -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
       - name: terraform plan
         run: |
-            terraform plan -var-file="staging_vars.tfvars" -out=tfplan
+            terraform plan -var-file="staging.tfvars" -out=tfplan
       - name: terraform apply
         run: |
             terraform apply -auto-approve tfplan
