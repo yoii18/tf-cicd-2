@@ -3,6 +3,10 @@ resource "azurerm_data_factory" "adf" {
   name                = var.adfname
   resource_group_name = var.rgname
   location            = var.location
+
+  identity {
+    type = "SystemAssigned"
+  }
 }
 
 data "azuread_group" "storage_blob_contributors" {
@@ -10,13 +14,14 @@ data "azuread_group" "storage_blob_contributors" {
   security_enabled = true
 }
 
-data "azurerm_data_factory" "adf" {
-  name                = var.adfname
-  resource_group_name = var.rgname
-}
+# data "azurerm_data_factory" "adf" {
+#   name                = var.adfname
+#   resource_group_name = var.rgname
+# }
 
 data "azuread_service_principal" "adf_sp" {
-  object_id = data.azurerm_data_factory.adf.identity[0].principal_id
+  object_id  = azurerm_data_factory.adf.identity[0].principal_id
+  depends_on = [azurerm_data_factory.adf]
 }
 
 resource "azuread_group_member" "storage_blob_group_member_addition" {
