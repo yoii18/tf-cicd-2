@@ -9,6 +9,11 @@ resource "azurerm_data_factory" "adf" {
   }
 }
 
+resource "time_sleep" "wait_for_adf_sp" {
+  create_duration = "30s"
+  depends_on      = [azurerm_data_factory.adf]
+}
+
 data "azuread_group" "storage_blob_contributors" {
   display_name     = var.groupname
   security_enabled = true
