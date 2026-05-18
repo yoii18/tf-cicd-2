@@ -10,5 +10,10 @@ variable "strgacctname" {
 
 variable "location" {
   type        = string
-  description = "namw of the location"
+  description = "name of the location"
+}
+
+variable "groupname" {
+  type        = string
+  description = "name of the azure ad group with storage blob data contributor role"
 }

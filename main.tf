@@ -11,3 +11,11 @@ module "strgacct" {
 
   depends_on = [azurerm_resource_group.rg]
 }
+
+module "adf" {
+  source    = "./modules/adf"
+  rgname    = var.rgname
+  location  = var.location
+  adfname   = var.adfname
+  groupname = var.groupname
+}
