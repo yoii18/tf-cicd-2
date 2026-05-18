@@ -17,3 +17,8 @@ variable "groupname" {
   type        = string
   description = "name of the azure ad group with storage blob data contributor role"
 }
+
+variable "adfname" {
+  type        = string
+  description = "name of the data factory"
+}
